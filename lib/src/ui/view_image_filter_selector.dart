@@ -24,10 +24,12 @@ class ImageFilterSelector extends StatelessWidget {
   final BoxFit fit;
   final ImageFilterController controller;
   final Map<String, List<int>> cachedFilters = {};
+  final FilterOptions filterOptions;
 
   ImageFilterSelector({
     Key key,
     @required this.controller,
+    this.filterOptions = const FilterOptions(),
     this.loader = const Center(child: CircularProgressIndicator()),
     this.fit = BoxFit.cover,
   }) : super(key: key);
@@ -48,7 +50,7 @@ class ImageFilterSelector extends StatelessWidget {
                   constraints: BoxConstraints(maxHeight: 140),
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    itemCount: presetFiltersList.length,
+                    itemCount: filterOptions.filters.length,
                     itemBuilder: (BuildContext context, int index) {
                       return InkWell(
                         child: Padding(
@@ -57,19 +59,21 @@ class ImageFilterSelector extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: <Widget>[
-                              _buildFilterThumbnail(presetFiltersList[index],
-                                  snapshot.data, controller.filename),
+                              _buildFilterThumbnail(
+                                  filterOptions.filters[index],
+                                  snapshot.data,
+                                  controller.filename),
                               SizedBox(
                                 height: 5.0,
                               ),
                               Text(
-                                presetFiltersList[index].name,
+                                filterOptions.filters[index].name,
                               )
                             ],
                           ),
                         ),
                         onTap: () =>
-                            controller.filter = presetFiltersList[index],
+                            controller.filter = filterOptions.filters[index],
                       );
                     },
                   ),
@@ -143,25 +147,6 @@ class ImageFilterSelector extends StatelessWidget {
       );
     }
   }
-
-//}
-//
-//class ImageFilterHelper {
-//  Future<String> get _localPath async {
-//    final directory = await getApplicationDocumentsDirectory();
-//    return directory.path;
-//  }
-
-//  Future<File> get _localFile async {
-//    final path = await _localPath;
-//    return File('$path/filtered_${_filter?.name ?? "_"}_$filename');
-//  }
-
-//  Future<File> saveFilteredImage() async {
-//    var imageFile = File();
-//    await imageFile.writeAsBytes(cachedFilters[_filter?.name ?? "_"]);
-//    return imageFile;
-//  }
 
   Widget buildFilteredImage(AssetItem item) {
     Filter filter = item.filter;

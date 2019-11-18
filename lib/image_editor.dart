@@ -18,3 +18,4 @@ import 'package:provider/provider.dart';
 part 'src/asset_item.dart';
 part 'src/ui/view_image_filter_selector.dart';
 part 'src/ui/view_image_editor.dart';
+part 'src/multi_image_editor.dart';
