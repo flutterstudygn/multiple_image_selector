@@ -2,19 +2,19 @@
 
 A new Flutter package for multiple image picker, cropper and filtering.
 
-# Key features
+## Key features
 * Pick multiple images.
 * Take a picture in the grid view.
 * Restrict the maximum count of images the user can pick.
 * Adjust cropping for each images.
 * Adjust filter for each images.
 
-# Based on
-[multi_image_picker](https://pub.dev/packages/multi_image_picker)
-[image_cropper](https://pub.dev/packages/image_cropper)
-[photofilters](https://pub.dev/packages/photofilters)
+## Based on
+* [multi_image_picker](https://pub.dev/packages/multi_image_picker)
+* [image_cropper](https://pub.dev/packages/image_cropper)
+* [photofilters](https://pub.dev/packages/photofilters)
 
-# Installing
+## Installing
 ### pubspec.yaml
 
 ### Initial setup
