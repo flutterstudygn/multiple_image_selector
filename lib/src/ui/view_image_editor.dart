@@ -1,15 +1,18 @@
 part of image_editor;
 
 class ImageEditorView extends StatefulWidget {
-  final CropOptions _cropOptions;
-  final FilterOptions _filterOptions;
   final List<AssetItem> _assetItems;
+  final CropOptions _cropOptions;
+  final List<Filter> filters;
+  final EditorOptions _editorOptions;
+
   ImageEditorView(
     this._assetItems, {
     CropOptions cropOptions,
-    FilterOptions filterOptions,
+    this.filters,
+    EditorOptions editorOptions,
   })  : _cropOptions = cropOptions ?? const CropOptions(),
-        _filterOptions = filterOptions ?? const FilterOptions();
+        _editorOptions = editorOptions ?? const EditorOptions();
 
   @override
   _ImageEditorViewState createState() => _ImageEditorViewState();
@@ -45,6 +48,7 @@ class _ImageEditorViewState extends State<ImageEditorView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: widget._editorOptions.backgroundColor,
       appBar: AppBar(
         actions: <Widget>[
           IconButton(
@@ -56,58 +60,63 @@ class _ImageEditorViewState extends State<ImageEditorView> {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 32.0),
+        padding: const EdgeInsets.only(bottom: 32.0),
         child: Container(
             child: Column(
           mainAxisSize: MainAxisSize.max,
           children: <Widget>[
-            AspectRatio(
-              aspectRatio: 1.0,
-              child: CarouselSlider(
-                aspectRatio: 1 / 0.78,
-                viewportFraction: 0.8,
-                autoPlay: false,
-                enableInfiniteScroll: false,
-                onPageChanged: (idx) {
-                  _currentCarouselIndex = idx;
-                  _imageFilterController.file = widget._assetItems[idx].file;
-                },
-                items: List.generate(
-                  widget._assetItems?.length ?? 0,
-                  (idx) {
-                    AssetItem imageItem = widget._assetItems[idx];
-                    return InkWell(
-                      onTap: () async {
-                        if (_currentCarouselIndex == idx) {
-                          File result =
-                              await _cropImages(context, imageItem.file.path);
-                          _imageFilterController.file = result;
-                          widget._assetItems[idx].file = result;
-                          setState(() {});
-                        }
+            Expanded(
+              child: Center(
+                child: AspectRatio(
+                  aspectRatio: 1.0,
+                  child: CarouselSlider(
+                    aspectRatio: 1 / 0.78,
+                    viewportFraction: 0.8,
+                    autoPlay: false,
+                    enableInfiniteScroll: false,
+                    onPageChanged: (idx) {
+                      _currentCarouselIndex = idx;
+                      _imageFilterController.file =
+                          widget._assetItems[idx].file;
+                    },
+                    items: List.generate(
+                      widget._assetItems?.length ?? 0,
+                      (idx) {
+                        AssetItem imageItem = widget._assetItems[idx];
+                        return InkWell(
+                          onTap: () async {
+                            if (_currentCarouselIndex == idx) {
+                              File result = await _cropImages(
+                                  context, imageItem.file.path);
+                              _imageFilterController.file = result;
+                              widget._assetItems[idx].file = result;
+                              setState(() {});
+                            }
+                          },
+                          child: Container(
+                            color: widget._editorOptions.imageBackgroundColor,
+                            width: MediaQuery.of(context).size.width,
+                            margin: const EdgeInsets.symmetric(horizontal: 5.0),
+                            child: Stack(
+                              children: <Widget>[
+                                Center(child: imageItem.buildResultImage())
+                              ],
+                            ),
+                          ),
+                        );
                       },
-                      child: Container(
-                        width: MediaQuery.of(context).size.width,
-                        margin: const EdgeInsets.symmetric(horizontal: 5.0),
-                        child: Stack(
-                          children: <Widget>[
-                            Center(child: imageItem.buildResultImage())
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+                    ),
+                  ),
                 ),
               ),
             ),
-            Flexible(
-              flex: 1,
-              child: Container(
-                child: Center(
-                  child: ImageFilterSelector(
-                    controller: _imageFilterController,
-                    key: _keyFilterSelector,
-                  ),
+            Container(
+              child: Center(
+                child: ImageFilterSelector(
+                  controller: _imageFilterController,
+                  filters: widget.filters,
+                  editorOptions: widget._editorOptions,
+                  key: _keyFilterSelector,
                 ),
               ),
             ),
@@ -120,10 +129,15 @@ class _ImageEditorViewState extends State<ImageEditorView> {
   Future<File> _cropImages(BuildContext context, String filePath) async {
     return ImageCropper.cropImage(
       sourcePath: filePath,
-      aspectRatio: widget._cropOptions
-          .aspectRatio, //CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
-      aspectRatioPresets: widget
-          ._cropOptions.aspectRatioPresets, //[CropAspectRatioPreset.square],
+      maxWidth: widget._cropOptions.maxWidth,
+      maxHeight: widget._cropOptions.maxHeight,
+      aspectRatio: widget._cropOptions.aspectRatio,
+      aspectRatioPresets: widget._cropOptions.aspectRatioPresets,
+      cropStyle: widget._cropOptions.cropStyle,
+      compressFormat: widget._cropOptions.compressFormat,
+      compressQuality: widget._cropOptions.compressQuality,
+      androidUiSettings: widget._cropOptions.androidUiSettings,
+      iosUiSettings: widget._cropOptions.iosUiSettings,
     );
   }
 }

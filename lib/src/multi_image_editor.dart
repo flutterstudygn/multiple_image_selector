@@ -30,11 +30,25 @@ class CropOptions {
   });
 }
 
-class FilterOptions {
-  final List<Filter> _filters;
-  List<Filter> get filters => _filters ?? presetFiltersList;
+enum FilterThumbnailStyle { CIRCLE, SQUARE }
 
-  const FilterOptions({List<Filter> filters}) : _filters = filters;
+class EditorOptions {
+  final Color backgroundColor;
+  final Color imageBackgroundColor;
+
+  final double thumbnailSize;
+  final double marginBetween;
+  final bool showFilterName;
+  final FilterThumbnailStyle filterThumbnailStyle;
+
+  const EditorOptions({
+    this.backgroundColor = const Color(0xffffffff),
+    this.imageBackgroundColor = const Color(0xffcccccc),
+    this.thumbnailSize = 100.0,
+    this.filterThumbnailStyle = FilterThumbnailStyle.CIRCLE,
+    this.marginBetween = 5.0,
+    this.showFilterName = true,
+  });
 }
 
 class MultiImageEditor {
@@ -44,7 +58,8 @@ class MultiImageEditor {
     bool enableCamera = false,
     bool editEnabled = true,
     CropOptions cropOptions = const CropOptions(),
-    FilterOptions filterOptions = const FilterOptions(),
+    List<Filter> filters,
+    EditorOptions editorOptions = const EditorOptions(),
     List<Asset> selectedAssets = const [],
     CupertinoOptions cupertinoOptions = const CupertinoOptions(),
     MaterialOptions materialOptions = const MaterialOptions(),
@@ -70,7 +85,9 @@ class MultiImageEditor {
             MaterialPageRoute(
               builder: (context) => ImageEditorView(
                 assetItems,
+                filters: filters,
                 cropOptions: cropOptions,
+                editorOptions: editorOptions,
               ),
             ),
           );

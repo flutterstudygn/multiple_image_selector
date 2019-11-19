@@ -24,15 +24,18 @@ class ImageFilterSelector extends StatelessWidget {
   final BoxFit fit;
   final ImageFilterController controller;
   final Map<String, List<int>> cachedFilters = {};
-  final FilterOptions filterOptions;
+  final List<Filter> filters;
+  final EditorOptions editorOptions;
 
   ImageFilterSelector({
     Key key,
     @required this.controller,
-    this.filterOptions = const FilterOptions(),
+    List<Filter> filters,
+    this.editorOptions = const EditorOptions(),
     this.loader = const Center(child: CircularProgressIndicator()),
     this.fit = BoxFit.cover,
-  }) : super(key: key);
+  })  : this.filters = filters ?? presetFiltersList,
+        super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -50,30 +53,34 @@ class ImageFilterSelector extends StatelessWidget {
                   constraints: BoxConstraints(maxHeight: 140),
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    itemCount: filterOptions.filters.length,
+                    itemCount: filters.length,
                     itemBuilder: (BuildContext context, int index) {
                       return InkWell(
                         child: Padding(
-                          padding: EdgeInsets.all(5.0),
+                          padding:
+                              EdgeInsets.all(editorOptions.marginBetween / 2.0),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: <Widget>[
-                              _buildFilterThumbnail(
-                                  filterOptions.filters[index],
-                                  snapshot.data,
-                                  controller.filename),
-                              SizedBox(
-                                height: 5.0,
-                              ),
-                              Text(
-                                filterOptions.filters[index].name,
-                              )
+                              _buildFilterThumbnail(filters[index],
+                                  snapshot.data, controller.filename),
+                              if (editorOptions.showFilterName)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 5.0),
+                                  child: SizedBox(
+                                    width: editorOptions.thumbnailSize,
+                                    child: Center(
+                                      child: Text(
+                                        filters[index].name,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                         ),
-                        onTap: () =>
-                            controller.filter = filterOptions.filters[index],
+                        onTap: () => controller.filter = filters[index],
                       );
                     },
                   ),
@@ -92,13 +99,7 @@ class ImageFilterSelector extends StatelessWidget {
 
   _buildFilterThumbnail(Filter filter, img.Image image, String filename) {
     if (image == null) {
-      return CircleAvatar(
-        radius: 50.0,
-        child: Center(
-          child: loader,
-        ),
-        backgroundColor: Colors.white,
-      );
+      return _buildThumbnailImage(null);
     }
     if (cachedFilters[filter?.name ?? "_"] == null) {
       return FutureBuilder<List<int>>(
@@ -112,13 +113,7 @@ class ImageFilterSelector extends StatelessWidget {
             case ConnectionState.none:
             case ConnectionState.active:
             case ConnectionState.waiting:
-              return CircleAvatar(
-                radius: 50.0,
-                child: Center(
-                  child: loader,
-                ),
-                backgroundColor: Colors.white,
-              );
+              return _buildThumbnailImage(null);
             case ConnectionState.done:
               if (snapshot.hasError) {
                 return Center(
@@ -126,26 +121,40 @@ class ImageFilterSelector extends StatelessWidget {
                 );
               }
               cachedFilters[filter?.name ?? "_"] = snapshot.data;
-              return CircleAvatar(
-                radius: 50.0,
-                backgroundImage: MemoryImage(
-                  snapshot.data,
-                ),
-                backgroundColor: Colors.white,
-              );
+              return _buildThumbnailImage(cachedFilters[filter?.name ?? "_"]);
           }
           return null; // unreachable
         },
       );
     } else {
-      return CircleAvatar(
-        radius: 50.0,
-        backgroundImage: MemoryImage(
-          cachedFilters[filter?.name ?? "_"],
-        ),
-        backgroundColor: Colors.white,
-      );
+      return _buildThumbnailImage(cachedFilters[filter?.name ?? "_"]);
     }
+  }
+
+  Widget _buildThumbnailImage(List<int> bytes) {
+    switch (editorOptions.filterThumbnailStyle) {
+      case FilterThumbnailStyle.CIRCLE:
+        return CircleAvatar(
+          radius: editorOptions.thumbnailSize / 2,
+          backgroundImage: bytes != null ? MemoryImage(bytes) : null,
+          child: bytes == null ? loader : Container(),
+          backgroundColor: Colors.white,
+        );
+      case FilterThumbnailStyle.SQUARE:
+        return SizedBox(
+          width: editorOptions.thumbnailSize,
+          height: editorOptions.thumbnailSize,
+          child: bytes != null
+              ? Image.memory(
+                  bytes,
+                  width: editorOptions.thumbnailSize,
+                  height: editorOptions.thumbnailSize,
+                  fit: BoxFit.cover,
+                )
+              : loader,
+        );
+    }
+    return null; // unreachable
   }
 
   Widget buildFilteredImage(AssetItem item) {

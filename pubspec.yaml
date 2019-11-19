@@ -2,10 +2,10 @@ name: image_editor
 description: A new Flutter package.
 version: 0.0.1
 author:
-homepage:
+homepage: "https://github.com/flutterstudygn/image_editor"
 
 environment:
-  sdk: ">=2.1.0 <3.0.0"
+  sdk: ">=2.2.2 <3.0.0"
 
 dependencies:
   flutter:

@@ -56,6 +56,16 @@ class _MyHomePageState extends State<MyHomePage> {
               aspectRatioPresets: [
                 CropAspectRatioPreset.square,
               ],
+              aspectRatio: CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
+              cropStyle: CropStyle.rectangle,
+              androidUiSettings: AndroidUiSettings(
+                toolbarColor: Theme.of(context).primaryColor,
+                toolbarWidgetColor: const Color(0xffffffff),
+                toolbarTitle: '',
+              ),
+            ),
+            editorOptions: EditorOptions(
+              filterThumbnailStyle: FilterThumbnailStyle.SQUARE,
             ),
           );
           setState(() {});
