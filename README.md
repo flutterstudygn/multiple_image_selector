@@ -18,7 +18,7 @@ A new Flutter package for multiple image picker, cropper and filtering.
 ### pubspec.yaml
 
 ### Initial setup
-** iOS **
+**iOS**
 * Add permission(multi_image_picker) into `Info.plist`
 ```xml
 <key>NSPhotoLibraryUsageDescription</key>
@@ -27,7 +27,7 @@ A new Flutter package for multiple image picker, cropper and filtering.
 <string>Example usage description</string>
 ```
 
-** Android **
+**Android**
 * Add permission(multi_image_picker) into `AndroidManifest.xml`
 ```xml
 <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
