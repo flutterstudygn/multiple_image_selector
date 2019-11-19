@@ -62,56 +62,80 @@ class _ImageEditorViewState extends State<ImageEditorView> {
       body: Padding(
         padding: const EdgeInsets.only(bottom: 32.0),
         child: Container(
-            child: Column(
-          mainAxisSize: MainAxisSize.max,
-          children: <Widget>[
-            Expanded(
-              child: Center(
-                child: AspectRatio(
-                  aspectRatio: 1.0,
-                  child: CarouselSlider(
-                    aspectRatio: 1 / 0.78,
-                    viewportFraction: 0.8,
-                    autoPlay: false,
-                    enableInfiniteScroll: false,
-                    onPageChanged: (idx) {
-                      _currentCarouselIndex = idx;
-                      _imageFilterController.file =
-                          widget._assetItems[idx].file;
-                    },
-                    items: List.generate(
-                      widget._assetItems?.length ?? 0,
-                      (idx) {
-                        AssetItem imageItem = widget._assetItems[idx];
-                        return InkWell(
-                          onTap: () async {
-                            if (_currentCarouselIndex == idx) {
-                              File result = await _cropImages(
-                                  context, imageItem.file.path);
-                              _imageFilterController.file = result;
-                              widget._assetItems[idx].file = result;
-                              setState(() {});
-                            }
-                          },
-                          child: Container(
-                            color: widget._editorOptions.imageBackgroundColor,
-                            width: MediaQuery.of(context).size.width,
-                            margin: const EdgeInsets.symmetric(horizontal: 5.0),
-                            child: Stack(
-                              children: <Widget>[
-                                Center(child: imageItem.buildResultImage())
-                              ],
-                            ),
-                          ),
-                        );
+          child: Column(
+            mainAxisSize: MainAxisSize.max,
+            children: <Widget>[
+              Expanded(
+                child: Center(
+                  child: AspectRatio(
+                    aspectRatio: 1.0,
+                    child: CarouselSlider(
+                      aspectRatio: 1 / 0.78,
+                      viewportFraction: 0.8,
+                      autoPlay: false,
+                      enableInfiniteScroll: false,
+                      onPageChanged: (idx) {
+                        _currentCarouselIndex = idx;
+                        _imageFilterController.file =
+                            widget._assetItems[idx].file;
                       },
+                      items: List.generate(
+                        widget._assetItems?.length ?? 0,
+                        (idx) {
+                          AssetItem imageItem = widget._assetItems[idx];
+                          return Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: InkWell(
+                              onTap: () async {
+                                if (_currentCarouselIndex == idx) {
+                                  File result = await _cropImages(
+                                      context, imageItem.file.path);
+                                  _imageFilterController.file = result;
+                                  widget._assetItems[idx].file = result;
+                                  setState(() {});
+                                }
+                              },
+                              child: Stack(
+                                children: <Widget>[
+                                  Container(
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    child: Material(
+                                      elevation: 4.0,
+                                      child: imageItem.buildResultImage(
+                                        fit: widget._cropOptions.fit,
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    alignment: Alignment.bottomRight,
+                                    child: IgnorePointer(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(10.0),
+                                        child: CircleAvatar(
+                                          backgroundColor: Colors.black54,
+                                          radius: 15,
+                                          child: Icon(
+                                            Icons.crop,
+                                            size: 13,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            Container(
-              child: Center(
+              Center(
                 child: ImageFilterSelector(
                   controller: _imageFilterController,
                   filters: widget.filters,
@@ -119,9 +143,9 @@ class _ImageEditorViewState extends State<ImageEditorView> {
                   key: _keyFilterSelector,
                 ),
               ),
-            ),
-          ],
-        )),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -133,7 +157,6 @@ class _ImageEditorViewState extends State<ImageEditorView> {
       maxHeight: widget._cropOptions.maxHeight,
       aspectRatio: widget._cropOptions.aspectRatio,
       aspectRatioPresets: widget._cropOptions.aspectRatioPresets,
-      cropStyle: widget._cropOptions.cropStyle,
       compressFormat: widget._cropOptions.compressFormat,
       compressQuality: widget._cropOptions.compressQuality,
       androidUiSettings: widget._cropOptions.androidUiSettings,

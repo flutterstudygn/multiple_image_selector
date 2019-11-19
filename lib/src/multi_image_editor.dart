@@ -3,9 +3,8 @@ part of image_editor;
 class CropOptions {
   final int maxWidth;
   final int maxHeight;
-  final CropAspectRatio aspectRatio;
+  final CropAspectRatio _aspectRatio;
   final List<CropAspectRatioPreset> aspectRatioPresets;
-  final CropStyle cropStyle;
   final ImageCompressFormat compressFormat;
   final int compressQuality;
   final AndroidUiSettings androidUiSettings;
@@ -14,7 +13,7 @@ class CropOptions {
   const CropOptions({
     this.maxWidth,
     this.maxHeight,
-    this.aspectRatio,
+    CropAspectRatio aspectRatio,
     this.aspectRatioPresets = const [
       CropAspectRatioPreset.original,
       CropAspectRatioPreset.square,
@@ -22,12 +21,56 @@ class CropOptions {
       CropAspectRatioPreset.ratio4x3,
       CropAspectRatioPreset.ratio16x9,
     ],
-    this.cropStyle = CropStyle.rectangle,
     this.compressFormat = ImageCompressFormat.jpg,
     this.compressQuality = 90,
     this.androidUiSettings,
     this.iosUiSettings,
-  });
+  }) : _aspectRatio = aspectRatio;
+
+  CropAspectRatio get aspectRatio {
+    if (_aspectRatio != null) {
+      return _aspectRatio;
+    }
+    if (aspectRatioPresets?.length == 1) {
+      switch (aspectRatioPresets[0]) {
+        case CropAspectRatioPreset.original:
+          return null;
+        case CropAspectRatioPreset.square:
+          return CropAspectRatio(ratioX: 1, ratioY: 1);
+        case CropAspectRatioPreset.ratio3x2:
+          return CropAspectRatio(ratioX: 3, ratioY: 2);
+        case CropAspectRatioPreset.ratio5x3:
+          return CropAspectRatio(ratioX: 5, ratioY: 3);
+        case CropAspectRatioPreset.ratio4x3:
+          return CropAspectRatio(ratioX: 4, ratioY: 3);
+        case CropAspectRatioPreset.ratio5x4:
+          return CropAspectRatio(ratioX: 5, ratioY: 4);
+        case CropAspectRatioPreset.ratio7x5:
+          return CropAspectRatio(ratioX: 7, ratioY: 5);
+        case CropAspectRatioPreset.ratio16x9:
+          return CropAspectRatio(ratioX: 16, ratioY: 9);
+      }
+    }
+    return null;
+  }
+
+  BoxFit get fit {
+    if (aspectRatioPresets?.length == 1) {
+      switch (aspectRatioPresets[0]) {
+        case CropAspectRatioPreset.original:
+        case CropAspectRatioPreset.ratio3x2:
+        case CropAspectRatioPreset.ratio5x3:
+        case CropAspectRatioPreset.ratio4x3:
+        case CropAspectRatioPreset.ratio5x4:
+        case CropAspectRatioPreset.ratio7x5:
+        case CropAspectRatioPreset.ratio16x9:
+          return null;
+        case CropAspectRatioPreset.square:
+          return BoxFit.cover;
+      }
+    }
+    return null;
+  }
 }
 
 enum FilterThumbnailStyle { CIRCLE, SQUARE }
@@ -43,7 +86,7 @@ class EditorOptions {
 
   const EditorOptions({
     this.backgroundColor = const Color(0xffffffff),
-    this.imageBackgroundColor = const Color(0xffcccccc),
+    this.imageBackgroundColor = const Color(0x33cccccc),
     this.thumbnailSize = 100.0,
     this.filterThumbnailStyle = FilterThumbnailStyle.CIRCLE,
     this.marginBetween = 5.0,

@@ -4,10 +4,12 @@ class ImageFilterController extends ValueNotifier<File> {
   ImageFilterController({File value}) : super(value);
   String filename;
 
-  set file(File file) {
-    value = file;
-    filename = file != null ? basename(file.path) : null;
-    notifyListeners();
+  set file(final File file) {
+    if (file != null) {
+      value = file;
+      filename = basename(file.path);
+      notifyListeners();
+    }
   }
 
   set filter(Filter filter) {
@@ -34,7 +36,7 @@ class ImageFilterSelector extends StatelessWidget {
     this.editorOptions = const EditorOptions(),
     this.loader = const Center(child: CircularProgressIndicator()),
     this.fit = BoxFit.cover,
-  })  : this.filters = filters ?? presetFiltersList,
+  })  : this.filters = filters ?? defaultFilterList,
         super(key: key);
 
   @override
@@ -46,46 +48,49 @@ class ImageFilterSelector extends StatelessWidget {
           File file = controller.value;
           if (file == null) return Container();
           cachedFilters.clear();
-          return FutureBuilder<img.Image>(
+          return Container(
+            height: editorOptions.thumbnailSize +
+                editorOptions.marginBetween * 2 +
+                40.0,
+            child: FutureBuilder<img.Image>(
               future: _decodeImageFromFile(file, resize: 200),
               builder: (context, snapshot) {
-                return Container(
-                  constraints: BoxConstraints(maxHeight: 140),
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: filters.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return InkWell(
-                        child: Padding(
-                          padding:
-                              EdgeInsets.all(editorOptions.marginBetween / 2.0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: <Widget>[
-                              _buildFilterThumbnail(filters[index],
-                                  snapshot.data, controller.filename),
-                              if (editorOptions.showFilterName)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 5.0),
-                                  child: SizedBox(
-                                    width: editorOptions.thumbnailSize,
-                                    child: Center(
-                                      child: Text(
-                                        filters[index].name,
-                                      ),
+                return ListView.builder(
+                  itemCount: filters.length,
+                  scrollDirection: Axis.horizontal,
+                  itemBuilder: (BuildContext context, int index) {
+                    return InkWell(
+                      child: Padding(
+                        padding:
+                            EdgeInsets.all(editorOptions.marginBetween / 2.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: <Widget>[
+                            _buildFilterThumbnail(filters[index], snapshot.data,
+                                controller.filename),
+                            if (editorOptions.showFilterName)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 5.0),
+                                child: SizedBox(
+                                  width: editorOptions.thumbnailSize,
+                                  child: Center(
+                                    child: Text(
+                                      filters[index].name,
                                     ),
                                   ),
                                 ),
-                            ],
-                          ),
+                              ),
+                          ],
                         ),
-                        onTap: () => controller.filter = filters[index],
-                      );
-                    },
-                  ),
+                      ),
+                      onTap: () => controller.filter = filters[index],
+                    );
+                  },
                 );
-              });
+              },
+            ),
+          );
         },
       ),
     );
