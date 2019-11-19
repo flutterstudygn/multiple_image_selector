@@ -14,7 +14,7 @@ A new Flutter package for multiple image picker, cropper and filtering.
 * [image_cropper](https://pub.dev/packages/image_cropper)
 * [photofilters](https://pub.dev/packages/photofilters)
 
-## Installing
+## Installation
 ### pubspec.yaml
 
 ### Initial setup
