@@ -222,7 +222,12 @@ class _ImageEditorViewState extends State<ImageEditorView> {
                     ),
                   ),
                 ),
-                Center(
+                Container(
+                  constraints: BoxConstraints(
+                    maxHeight: widget._editorOptions.thumbnailSize +
+                        widget._editorOptions.marginBetween * 2 +
+                        40.0,
+                  ),
                   child: ImageFilterSelector(
                     controller: _notifier._imageFilterController,
                     filters: widget.filters,

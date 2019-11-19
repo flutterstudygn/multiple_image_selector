@@ -48,49 +48,44 @@ class ImageFilterSelector extends StatelessWidget {
           File file = controller.value;
           if (file == null) return Container();
           cachedFilters.clear();
-          return Container(
-            height: editorOptions.thumbnailSize +
-                editorOptions.marginBetween * 2 +
-                40.0,
-            child: FutureBuilder<img.Image>(
-              future: _decodeImageFromFile(file,
-                  resize: editorOptions.thumbnailSize * 2),
-              builder: (context, snapshot) {
-                return ListView.builder(
-                  itemCount: filters.length,
-                  scrollDirection: Axis.horizontal,
-                  itemBuilder: (BuildContext context, int index) {
-                    return InkWell(
-                      child: Padding(
-                        padding:
-                            EdgeInsets.all(editorOptions.marginBetween / 2.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: <Widget>[
-                            _buildFilterThumbnail(filters[index], snapshot.data,
-                                controller.filename),
-                            if (editorOptions.showFilterName)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 5.0),
-                                child: SizedBox(
-                                  width: editorOptions.thumbnailSize,
-                                  child: Center(
-                                    child: Text(
-                                      filters[index].name,
-                                    ),
+          return FutureBuilder<img.Image>(
+            future: _decodeImageFromFile(file,
+                resize: editorOptions.thumbnailSize * 2),
+            builder: (context, snapshot) {
+              return ListView.builder(
+                itemCount: filters.length,
+                scrollDirection: Axis.horizontal,
+                itemBuilder: (BuildContext context, int index) {
+                  return Padding(
+                    padding: EdgeInsets.all(editorOptions.marginBetween / 2.0),
+                    child: InkWell(
+                      onTap: () => controller.filter = filters[index],
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: <Widget>[
+                          _buildFilterThumbnail(filters[index], snapshot.data,
+                              controller.filename),
+                          if (editorOptions.showFilterName)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 5.0),
+                              child: Container(
+                                width: editorOptions.thumbnailSize,
+                                child: Center(
+                                  child: Text(
+                                    filters[index].name,
                                   ),
                                 ),
                               ),
-                          ],
-                        ),
+                            ),
+                        ],
                       ),
-                      onTap: () => controller.filter = filters[index],
-                    );
-                  },
-                );
-              },
-            ),
+                    ),
+                  );
+                },
+              );
+            },
           );
         },
       ),
