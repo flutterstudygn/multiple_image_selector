@@ -36,7 +36,7 @@ class ImageFilterSelector extends StatelessWidget {
     this.editorOptions = const EditorOptions(),
     this.loader = const Center(child: CircularProgressIndicator()),
     this.fit = BoxFit.cover,
-  })  : this.filters = filters ?? defaultFilterList,
+  })  : this.filters = filters ?? presetFiltersList,
         super(key: key);
 
   @override
@@ -53,7 +53,8 @@ class ImageFilterSelector extends StatelessWidget {
                 editorOptions.marginBetween * 2 +
                 40.0,
             child: FutureBuilder<img.Image>(
-              future: _decodeImageFromFile(file, resize: 200),
+              future: _decodeImageFromFile(file,
+                  resize: editorOptions.thumbnailSize * 2),
               builder: (context, snapshot) {
                 return ListView.builder(
                   itemCount: filters.length,
@@ -96,13 +97,14 @@ class ImageFilterSelector extends StatelessWidget {
     );
   }
 
-  Future<img.Image> _decodeImageFromFile(File file, {int resize}) async {
+  Future<img.Image> _decodeImageFromFile(File file, {num resize}) async {
     img.Image image = img.decodeImage(await file.readAsBytes());
     if (resize == null) return image;
-    return img.copyResize(image, width: resize);
+    return img.copyResize(image, width: resize.toInt());
   }
 
-  _buildFilterThumbnail(Filter filter, img.Image image, String filename) {
+  Widget _buildFilterThumbnail(
+      Filter filter, img.Image image, String filename) {
     if (image == null) {
       return _buildThumbnailImage(null);
     }
@@ -160,36 +162,5 @@ class ImageFilterSelector extends StatelessWidget {
         );
     }
     return null; // unreachable
-  }
-
-  Widget buildFilteredImage(AssetItem item) {
-    Filter filter = item.filter;
-    return FutureBuilder<List<int>>(
-      future: _decodeImageFromFile(item.file).then((image) {
-        return compute(applyFilter, <String, dynamic>{
-          "filter": filter,
-          "image": image,
-          "filename": basename(item.file.path),
-        });
-      }),
-      builder: (BuildContext context, AsyncSnapshot<List<int>> snapshot) {
-        switch (snapshot.connectionState) {
-          case ConnectionState.none:
-            return loader;
-          case ConnectionState.active:
-          case ConnectionState.waiting:
-            return loader;
-          case ConnectionState.done:
-            if (snapshot.hasError)
-              return Center(child: Text('Error: ${snapshot.error}'));
-            cachedFilters[filter?.name ?? "_"] = snapshot.data;
-            return Image.memory(
-              snapshot.data,
-              fit: BoxFit.contain,
-            );
-        }
-        return null; // unreachable
-      },
-    );
   }
 }

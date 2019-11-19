@@ -1,5 +1,104 @@
 part of image_editor;
 
+class _ImageEditorNotifier extends ChangeNotifier {
+  final List<AssetItem> _assetItems;
+  _ImageEditorNotifier(this._assetItems);
+  final Map<int, List<int>> _cachedMap = Map();
+
+  int _currentIndex = 0;
+  final ImageFilterController _imageFilterController = ImageFilterController();
+
+  @override
+  void dispose() {
+    _imageFilterController.dispose();
+    super.dispose();
+  }
+
+  void init() {
+    _imageFilterController.filterChanged = (filter) {
+      _onFilterEdited(filter);
+    };
+    Future.delayed(Duration(milliseconds: 250), () {
+      _imageFilterController.file = _assetItems[_currentIndex].file;
+    });
+  }
+
+  set currentIndex(int value) {
+    if (_currentIndex != value) {
+      _currentIndex = value;
+      Future.delayed(Duration(milliseconds: 250), () {
+        _imageFilterController.file = _assetItems[_currentIndex].file;
+      });
+    }
+  }
+
+  void onFileEdited(File file) {
+    if (file == null) return;
+    _cachedMap[_currentIndex] = null;
+    _assetItems[_currentIndex].file = file;
+    Future.delayed(Duration(milliseconds: 250), () {
+      _imageFilterController.file = file;
+    });
+    notifyListeners();
+  }
+
+  void _onFilterEdited(Filter filter) {
+    if (_assetItems[_currentIndex].filter != filter) {
+      _cachedMap[_currentIndex] = null;
+      _assetItems[_currentIndex].filter = filter;
+      notifyListeners();
+    }
+  }
+
+  Widget buildResultImage(
+    int idx, {
+    BoxFit fit,
+    Widget loader = const Center(child: CircularProgressIndicator()),
+  }) {
+    AssetItem asset = _assetItems[idx];
+    if (asset.file == null) {
+      return Container();
+    }
+
+    if (asset.filter == null) {
+      return Image.file(asset.file, fit: fit);
+    }
+
+    if (_cachedMap[idx] != null) {
+      return Image.memory(_cachedMap[idx], fit: fit);
+    }
+
+    return FutureBuilder<List<int>>(
+      future: _decodeImageFromFile(asset.file).then((image) {
+        return compute(applyFilter, <String, dynamic>{
+          "filter": asset.filter,
+          "image": image,
+          "filename": basename(asset.file.path),
+        });
+      }),
+      builder: (BuildContext context, AsyncSnapshot<List<int>> snapshot) {
+        switch (snapshot.connectionState) {
+          case ConnectionState.none:
+          case ConnectionState.active:
+          case ConnectionState.waiting:
+            return loader;
+          case ConnectionState.done:
+            if (snapshot.hasError)
+              return Center(child: Text('Error: ${snapshot.error}'));
+            _cachedMap[idx] = snapshot.data;
+            return Image.memory(snapshot.data, fit: fit);
+        }
+        return null; // unreachable
+      },
+    );
+  }
+
+  Future<img.Image> _decodeImageFromFile(File file, {int resize}) async {
+    img.Image image = img.decodeImage(await file.readAsBytes());
+    return img.copyResize(image, width: resize ?? image.width);
+  }
+}
+
 class ImageEditorView extends StatefulWidget {
   final List<AssetItem> _assetItems;
   final CropOptions _cropOptions;
@@ -19,30 +118,11 @@ class ImageEditorView extends StatefulWidget {
 }
 
 class _ImageEditorViewState extends State<ImageEditorView> {
-  final ImageFilterController _imageFilterController = ImageFilterController();
-
-  int _currentCarouselIndex = 0;
-
-  final GlobalKey _keyFilterSelector =
-      GlobalKey(debugLabel: '_keyFilterSelector');
-
+  _ImageEditorNotifier _notifier;
   @override
   void initState() {
     super.initState();
-    Future.delayed(Duration.zero, () {
-      _imageFilterController.file =
-          widget._assetItems[_currentCarouselIndex].file;
-      _imageFilterController.filterChanged = (filter) {
-        widget._assetItems[_currentCarouselIndex].filter = filter;
-        setState(() {});
-      };
-    });
-  }
-
-  @override
-  void dispose() {
-    _imageFilterController.dispose();
-    super.dispose();
+    _notifier = _ImageEditorNotifier(widget._assetItems);
   }
 
   @override
@@ -62,88 +142,95 @@ class _ImageEditorViewState extends State<ImageEditorView> {
       body: Padding(
         padding: const EdgeInsets.only(bottom: 32.0),
         child: Container(
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            children: <Widget>[
-              Expanded(
-                child: Center(
-                  child: AspectRatio(
-                    aspectRatio: 1.0,
-                    child: CarouselSlider(
-                      aspectRatio: 1 / 0.78,
-                      viewportFraction: 0.8,
-                      autoPlay: false,
-                      enableInfiniteScroll: false,
-                      onPageChanged: (idx) {
-                        _currentCarouselIndex = idx;
-                        _imageFilterController.file =
-                            widget._assetItems[idx].file;
-                      },
-                      items: List.generate(
-                        widget._assetItems?.length ?? 0,
-                        (idx) {
-                          AssetItem imageItem = widget._assetItems[idx];
-                          return Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: InkWell(
-                              onTap: () async {
-                                if (_currentCarouselIndex == idx) {
-                                  File result = await _cropImages(
-                                      context, imageItem.file.path);
-                                  _imageFilterController.file = result;
-                                  widget._assetItems[idx].file = result;
-                                  setState(() {});
-                                }
-                              },
-                              child: Stack(
-                                children: <Widget>[
-                                  Container(
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    child: Material(
-                                      elevation: 4.0,
-                                      child: imageItem.buildResultImage(
-                                        fit: widget._cropOptions.fit,
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    alignment: Alignment.bottomRight,
-                                    child: IgnorePointer(
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(10.0),
-                                        child: CircleAvatar(
-                                          backgroundColor: Colors.black54,
-                                          radius: 15,
-                                          child: Icon(
-                                            Icons.crop,
-                                            size: 13,
-                                            color: Colors.white,
+          child: ChangeNotifierProvider<_ImageEditorNotifier>.value(
+            value: _notifier..init(),
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              children: <Widget>[
+                Expanded(
+                  child: Center(
+                    child: AspectRatio(
+                      aspectRatio: 1.0,
+                      child: CarouselSlider(
+                        aspectRatio: 1 / 0.78,
+                        viewportFraction: 0.8,
+                        autoPlay: false,
+                        enableInfiniteScroll: false,
+                        onPageChanged: (idx) {
+                          _notifier.currentIndex = idx;
+                        },
+                        items: List.generate(
+                          widget._assetItems?.length ?? 0,
+                          (idx) {
+                            AssetItem imageItem = widget._assetItems[idx];
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8.0),
+                              child: Consumer<_ImageEditorNotifier>(
+                                builder: (_, notifier, __) {
+                                  return InkWell(
+                                    onTap: () async {
+                                      if (notifier._currentIndex == idx) {
+                                        File result = await _cropImages(
+                                            context, imageItem.file.path);
+                                        notifier.onFileEdited(result);
+                                      }
+                                    },
+                                    child: Stack(
+                                      children: <Widget>[
+                                        Container(
+                                          width: double.infinity,
+                                          height: double.infinity,
+                                          child: Material(
+                                            elevation: 4.0,
+                                            child: notifier.buildResultImage(
+                                              idx,
+                                              fit: widget._cropOptions.fit,
+                                            ),
+//                                            child: imageItem.buildResultImage(
+//                                              fit: widget._cropOptions.fit,
+//                                            ),
                                           ),
                                         ),
-                                      ),
+                                        Container(
+                                          alignment: Alignment.bottomRight,
+                                          child: IgnorePointer(
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.all(10.0),
+                                              child: CircleAvatar(
+                                                backgroundColor: Colors.black54,
+                                                radius: 15,
+                                                child: Icon(
+                                                  Icons.crop,
+                                                  size: 13,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
+                                  );
+                                },
                               ),
-                            ),
-                          );
-                        },
+                            );
+                          },
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              Center(
-                child: ImageFilterSelector(
-                  controller: _imageFilterController,
-                  filters: widget.filters,
-                  editorOptions: widget._editorOptions,
-                  key: _keyFilterSelector,
+                Center(
+                  child: ImageFilterSelector(
+                    controller: _notifier._imageFilterController,
+                    filters: widget.filters,
+                    editorOptions: widget._editorOptions,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
