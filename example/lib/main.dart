@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:image_editor/image_editor.dart';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:multi_image_selector/multi_image_selector.dart';
 
 void main() => runApp(MyApp());
 
@@ -46,7 +46,7 @@ class _MyHomePageState extends State<MyHomePage> {
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         onPressed: () async {
-          _assetList = await MultiImageEditor.pickImages(
+          _assetList = await MultiImageSelector.pickImages(
             context,
             editEnabled: true,
             maxImages: 3,

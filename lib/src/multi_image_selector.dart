@@ -1,4 +1,4 @@
-part of image_editor;
+part of multi_image_selector;
 
 class CropOptions {
   final int maxWidth;
@@ -94,7 +94,7 @@ class EditorOptions {
   });
 }
 
-class MultiImageEditor {
+class MultiImageSelector {
   static Future<List<AssetItem>> pickImages(
     BuildContext context, {
     @required int maxImages,

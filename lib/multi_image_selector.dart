@@ -1,4 +1,4 @@
-library image_editor;
+library multi_image_selector;
 
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -19,4 +19,4 @@ import 'package:photofilters/widgets/photo_filter.dart';
 part 'src/asset_item.dart';
 part 'src/ui/view_image_filter_selector.dart';
 part 'src/ui/view_image_editor.dart';
-part 'src/multi_image_editor.dart';
+part 'src/multi_image_selector.dart';

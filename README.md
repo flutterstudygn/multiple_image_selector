@@ -1,4 +1,4 @@
-# image_editor
+# multi_image_selector
 
 A new Flutter package for multiple image picker, cropper and filtering.
 
@@ -15,8 +15,6 @@ A new Flutter package for multiple image picker, cropper and filtering.
 * [photofilters](https://pub.dev/packages/photofilters)
 
 ## Installation
-### pubspec.yaml
-
 ### Initial setup
 **iOS**
 * Add permission(multi_image_picker) into `Info.plist`

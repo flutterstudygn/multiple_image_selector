@@ -1,4 +1,4 @@
-part of image_editor;
+part of multi_image_selector;
 
 class ImageFilterController extends ValueNotifier<File> {
   ImageFilterController({File value}) : super(value);

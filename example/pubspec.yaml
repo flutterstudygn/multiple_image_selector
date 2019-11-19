@@ -19,8 +19,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  image_editor:
-    path: ../../image_editor
+  multi_image_selector:
+    path: ../../multi_image_selector
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

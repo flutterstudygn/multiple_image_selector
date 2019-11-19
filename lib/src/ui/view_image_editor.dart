@@ -1,4 +1,4 @@
-part of image_editor;
+part of multi_image_selector;
 
 class _ImageEditorNotifier extends ChangeNotifier {
   final List<AssetItem> _assetItems;
