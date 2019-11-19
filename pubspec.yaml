@@ -1,8 +1,8 @@
 name: multi_image_selector
 description: A new Flutter package.
 version: 0.0.1
-author:
-homepage: "https://github.com/flutterstudygn/image_editor"
+author: HuanSuh<huansuh@gmail.com>
+homepage: "https://github.com/flutterstudygn/multiple_image_selector"
 
 environment:
   sdk: ">=2.2.2 <3.0.0"
