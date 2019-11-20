@@ -1,4 +1,4 @@
-package gn.study.flutter.example
+package fsgn.multiimageselector.example
 
 import android.os.Bundle
 
