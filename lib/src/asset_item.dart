@@ -14,9 +14,14 @@ class AssetItem extends Asset {
   Filter filter;
 
   Future<img.Image> _decodeImageFromFile(File file, {int resize}) async {
-    img.Image image = img.decodeImage(await file.readAsBytes());
-    if (resize == null) return image;
-    return img.copyResize(image, width: resize);
+    try {
+      img.Image image = img.decodeImage(await file.readAsBytes());
+      if (image == null) return Future.error('');
+      if (resize == null) return image;
+      return img.copyResize(image, width: resize);
+    } catch (e) {
+      return Future.error(e);
+    }
   }
 
   Widget buildResultImage({
@@ -36,7 +41,7 @@ class AssetItem extends Asset {
           "image": image,
           "filename": basename(this.file.path),
         });
-      }),
+      }).catchError((e) => Future.error(e)),
       builder: (BuildContext context, AsyncSnapshot<List<int>> snapshot) {
         switch (snapshot.connectionState) {
           case ConnectionState.none:
@@ -44,8 +49,7 @@ class AssetItem extends Asset {
           case ConnectionState.waiting:
             return loader;
           case ConnectionState.done:
-            if (snapshot.hasError)
-              return Center(child: Text('Error: ${snapshot.error}'));
+            if (snapshot.hasError) return Image.file(file, fit: fit);
             return Image.memory(snapshot.data, fit: fit);
         }
         return null; // unreachable

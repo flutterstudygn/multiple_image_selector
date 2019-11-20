@@ -52,6 +52,9 @@ class ImageFilterSelector extends StatelessWidget {
             future: _decodeImageFromFile(file,
                 resize: editorOptions.thumbnailSize * 2),
             builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Text('failed to load filters');
+              }
               return ListView.builder(
                 itemCount: filters.length,
                 scrollDirection: Axis.horizontal,
@@ -93,9 +96,13 @@ class ImageFilterSelector extends StatelessWidget {
   }
 
   Future<img.Image> _decodeImageFromFile(File file, {num resize}) async {
-    img.Image image = img.decodeImage(await file.readAsBytes());
-    if (resize == null) return image;
-    return img.copyResize(image, width: resize.toInt());
+    try {
+      img.Image image = img.decodeImage(await file.readAsBytes());
+      if (resize == null) return image;
+      return img.copyResize(image, width: resize.toInt());
+    } catch (e) {
+      return e;
+    }
   }
 
   Widget _buildFilterThumbnail(
@@ -111,17 +118,17 @@ class ImageFilterSelector extends StatelessWidget {
           "filename": filename,
         }),
         builder: (BuildContext context, AsyncSnapshot<List<int>> snapshot) {
+          if (snapshot.hasError) {
+            return Center(
+              child: Text('Error: ${snapshot.error}'),
+            );
+          }
           switch (snapshot.connectionState) {
             case ConnectionState.none:
             case ConnectionState.active:
             case ConnectionState.waiting:
               return _buildThumbnailImage(null);
             case ConnectionState.done:
-              if (snapshot.hasError) {
-                return Center(
-                  child: Text('Error: ${snapshot.error}'),
-                );
-              }
               cachedFilters[filter?.name ?? "_"] = snapshot.data;
               return _buildThumbnailImage(cachedFilters[filter?.name ?? "_"]);
           }

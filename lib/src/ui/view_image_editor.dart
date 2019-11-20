@@ -75,7 +75,7 @@ class _ImageEditorNotifier extends ChangeNotifier {
           "image": image,
           "filename": basename(asset.file.path),
         });
-      }),
+      }).catchError((e) => Future.error(e)),
       builder: (BuildContext context, AsyncSnapshot<List<int>> snapshot) {
         switch (snapshot.connectionState) {
           case ConnectionState.none:
@@ -83,8 +83,7 @@ class _ImageEditorNotifier extends ChangeNotifier {
           case ConnectionState.waiting:
             return loader;
           case ConnectionState.done:
-            if (snapshot.hasError)
-              return Center(child: Text('Error: ${snapshot.error}'));
+            if (snapshot.hasError) return Image.file(asset.file, fit: fit);
             _cachedMap[idx] = snapshot.data;
             return Image.memory(snapshot.data, fit: fit);
         }
@@ -94,8 +93,12 @@ class _ImageEditorNotifier extends ChangeNotifier {
   }
 
   Future<img.Image> _decodeImageFromFile(File file, {int resize}) async {
-    img.Image image = img.decodeImage(await file.readAsBytes());
-    return img.copyResize(image, width: resize ?? image.width);
+    try {
+      img.Image image = img.decodeImage(await file.readAsBytes());
+      return img.copyResize(image, width: resize ?? image.width);
+    } catch (e) {
+      return Future.error(e);
+    }
   }
 }
 
