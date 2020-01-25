@@ -133,9 +133,11 @@ class _ImageEditorViewState extends State<ImageEditorView> {
     return Scaffold(
       backgroundColor: widget._editorOptions.backgroundColor,
       appBar: AppBar(
+        title: widget._editorOptions.title ?? null,
+        centerTitle: widget._editorOptions.centerTitle,
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.check),
+            icon: widget._editorOptions.checkIcon,
             onPressed: () {
               Navigator.of(context).pop(widget._assetItems);
             },
@@ -190,9 +192,6 @@ class _ImageEditorViewState extends State<ImageEditorView> {
                                               idx,
                                               fit: widget._cropOptions.fit,
                                             ),
-//                                            child: imageItem.buildResultImage(
-//                                              fit: widget._cropOptions.fit,
-//                                            ),
                                           ),
                                         ),
                                         Container(

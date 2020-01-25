@@ -7,8 +7,17 @@ class AssetItem extends Asset {
 
   File file;
   Future<AssetItem> init() async {
-    file = File(await filePath);
+//    file = File();
+//    file.writeAsBytesSync((await getByteData()));
     return this;
+  }
+
+  String get _ext {
+    List<String> path = super.name?.split('.');
+    if ((path?.length ?? 0) > 1) {
+      return path[path.length - 1];
+    }
+    return null;
   }
 
   Filter filter;
@@ -31,17 +40,11 @@ class AssetItem extends Asset {
     if (this.file == null) {
       return Container();
     }
-    if (this.filter == null) {
+    if (this.filter == null || filter is NoFilter) {
       return Image.file(this.file, fit: fit);
     }
     return FutureBuilder<List<int>>(
-      future: _decodeImageFromFile(this.file).then((image) {
-        return compute(applyFilter, <String, dynamic>{
-          "filter": filter,
-          "image": image,
-          "filename": basename(this.file.path),
-        });
-      }).catchError((e) => Future.error(e)),
+      future: _readFilteredBytes(),
       builder: (BuildContext context, AsyncSnapshot<List<int>> snapshot) {
         switch (snapshot.connectionState) {
           case ConnectionState.none:
@@ -57,11 +60,48 @@ class AssetItem extends Asset {
     );
   }
 
+  Future<List<int>> _readFilteredBytes() {
+    return _decodeImageFromFile(this.file).then((image) {
+      return compute(applyFilter, <String, dynamic>{
+        "filter": this.filter,
+        "image": image,
+        "filename": super.name,
+      });
+    }).catchError((e) => Future.error(e));
+  }
+
   Future<File> save(String path) {
     return file.copy(path);
   }
 
-  uploadFirestore() {}
+  Future<StorageTaskSnapshot> uploadFirestore(
+    String path, {
+    String name,
+    bool addExt = false,
+  }) async {
+    StorageReference ref = FirebaseStorage().ref();
+    path.split('/').forEach((p) {
+      ref = ref.child(p);
+    });
+
+    String childName = super.name;
+    if (name?.isNotEmpty == true) {
+      childName = name;
+      if (addExt) {
+        String ext = _ext;
+        if (ext != null) {
+          childName += '.$ext';
+        }
+      }
+    }
+    ref = ref.child(childName);
+
+    if (filter == null || filter is NoFilter) {
+      return ref.putFile(file).onComplete;
+    } else {
+      return ref.putData(await _readFilteredBytes()).onComplete;
+    }
+  }
 
   uploadS3() {}
 }

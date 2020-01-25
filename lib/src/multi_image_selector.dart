@@ -79,6 +79,10 @@ class EditorOptions {
   final Color backgroundColor;
   final Color imageBackgroundColor;
 
+  final Widget title;
+  final bool centerTitle;
+  final Icon checkIcon;
+
   final double thumbnailSize;
   final double marginBetween;
   final bool showFilterName;
@@ -87,8 +91,11 @@ class EditorOptions {
   const EditorOptions({
     this.backgroundColor = const Color(0xffffffff),
     this.imageBackgroundColor = const Color(0x33cccccc),
+    this.title,
+    this.centerTitle = true,
+    this.checkIcon = const Icon(Icons.check),
     this.thumbnailSize = 100.0,
-    this.filterThumbnailStyle = FilterThumbnailStyle.CIRCLE,
+    this.filterThumbnailStyle = FilterThumbnailStyle.SQUARE,
     this.marginBetween = 5.0,
     this.showFilterName = true,
   });
@@ -103,19 +110,21 @@ class MultiImageSelector {
     CropOptions cropOptions = const CropOptions(),
     List<Filter> filters,
     EditorOptions editorOptions = const EditorOptions(),
-    List<Asset> selectedAssets = const [],
+    List<AssetItem> selectedAssets = const [],
     CupertinoOptions cupertinoOptions = const CupertinoOptions(),
     MaterialOptions materialOptions = const MaterialOptions(),
-  }) {
-    return MultiImagePicker.pickImages(
-      maxImages: maxImages,
-      enableCamera: enableCamera,
-      selectedAssets: selectedAssets,
-      cupertinoOptions: cupertinoOptions,
-      materialOptions: materialOptions,
-    ).then((result) async {
-      if (result?.isNotEmpty == true) {
-        List<AssetItem> assetItems = await Future.wait(result
+  }) async {
+    List<AssetItem> assetItems;
+    if (selectedAssets.isEmpty || !editEnabled) {
+      try {
+        List<Asset> result = await MultiImagePicker.pickImages(
+          maxImages: maxImages,
+          enableCamera: enableCamera,
+          selectedAssets: selectedAssets,
+          cupertinoOptions: cupertinoOptions,
+          materialOptions: materialOptions,
+        );
+        assetItems = await Future.wait(result
             .map((asset) => AssetItem(
                   asset.identifier,
                   asset.name,
@@ -123,23 +132,46 @@ class MultiImageSelector {
                   asset.originalHeight,
                 ).init())
             .toList());
-        if (editEnabled) {
-          assetItems = await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => ImageEditorView(
-                assetItems,
-                filters: filters,
-                cropOptions: cropOptions,
-                editorOptions: editorOptions,
-              ),
-            ),
-          );
-          return assetItems;
-        } else {
-          return assetItems;
-        }
+      } catch (e) {
+        return null;
       }
-      return null;
-    });
+    } else {
+      assetItems = selectedAssets;
+    }
+
+    if (assetItems?.isNotEmpty == true) {
+      if (editEnabled) {
+        assetItems = await editImages(
+          context,
+          assetItems,
+          filters: filters,
+          cropOptions: cropOptions,
+          editorOptions: editorOptions,
+        );
+        return assetItems;
+      } else {
+        return assetItems;
+      }
+    }
+    return null;
+  }
+
+  static Future<List<AssetItem>> editImages(
+    BuildContext context,
+    List<AssetItem> selectedAssets, {
+    CropOptions cropOptions = const CropOptions(),
+    List<Filter> filters,
+    EditorOptions editorOptions = const EditorOptions(),
+  }) {
+    return Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ImageEditorView(
+          selectedAssets,
+          filters: filters,
+          cropOptions: cropOptions,
+          editorOptions: editorOptions,
+        ),
+      ),
+    );
   }
 }
