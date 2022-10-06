@@ -17,7 +17,7 @@ dependencies:
   carousel_slider: ^1.4.1
   path: ^1.6.4
   path_provider: ^1.5.1
-  provider: ^3.1.0+1
+  provider: 
 
   firebase_storage: ^3.1.1
 
